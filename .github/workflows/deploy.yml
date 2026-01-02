@@ -1,0 +1,38 @@
+name: Deploy alive site
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Descargar el código del repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Copiar solo la carpeta site/ al servidor
+      - name: Copy site files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "site/*"
+          target: "/srv/punk-records/hosting/alive/site"
+          strip_components: 1
+
+      # 3. Ejecutar deploy.sh en el servidor
+      - name: Run deploy script on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /srv/punk-records/hosting/alive
+            chmod +x deploy.sh
+            ./deploy.sh
